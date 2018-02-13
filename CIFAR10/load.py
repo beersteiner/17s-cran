@@ -18,44 +18,36 @@ class tabEntry:
 
 ## GLOBALS - Modify!
 
-wCliOpt = '/home/john/client-ssl/CastawayCay_MySQL/.writeclient.cnf' # from Tortuga VM
-#wCliOpt = '/home/john/Application_Files/MySQL/.local_sql.cnf' # from John's laptop
+# dictionary of MySql server config files
+d_sql = {'vm-ubuntu01': '/home/john/client-ssl/CastawayCay_MySQL/.writeclient.cnf',
+         'john_laptop': '/home/john/Application_Files/MySQL/.local_sql.cnf'}
+wCliOpt = d_sql[os.uname()[1]] # choose config file base on hostname
 DDIR = '/home/john/AnacondaProjects/Y790_Cran/17s-cran/CIFAR10/data/data/'
 DB_NAME = '17s_cran'
 TABLES = []
 TABLES.append(tabEntry(name = 'CIFAR10',
-                       dfiles = [DDIR+'data_batch_1', DDIR+'data_batch_2', 
-                                DDIR+'data_batch_3', DDIR+'data_batch_4', 
-                                DDIR+'data_batch_5', DDIR+'test_batch'],
+                       dfiles = [DDIR+f for f in os.listdir(DDIR)],
                        cols = [('data', sa.Text),
                                ('labels', sa.Integer),
                                ('filenames', sa.Text)]))
+OVERWRITE = False
 
 
 
 ## FUNCTIONS
 
-# Performs rudimentary data cleaning on source file
-#def clean(fname):
-#    name, ext = os.path.splitext(fname)
-#    from_file = csv.reader(open(fname, 'r'), delimiter=',')
-#    to_file = csv.writer(open(name+'_cleaned'+ext, 'w+'), delimiter=',')
-#    for r in from_file:
-#        r = [s.replace('-','_') for s in r] # replace '-' with '_'
-#        to_file.writerow(r)
-#    return name+'_cleaned'+ext
-
+# Extract the dickled dict from dfile and insert it into the tbl
 def load_cifar10(dfile, tbl):
     f = open(dfile, 'rb')
     d = cPickle.load(f)
     f.close()
     for i in range(len(d['data'])):
-        ds = cPickle.dumps(d['data'][i])
-        ins = tbl.insert().values(data=ds,
-                  labels=d['labels'][i],
-                  filenames=d['filenames'][i]
-                  )
-        ins.execute()
+        # create the insert() statement
+        ins = tbl.insert().values(data=cPickle.dumps(d['data'][i]),
+                         labels=d['labels'][i],
+                         filenames=d['filenames'][i]
+                         )
+        ins.execute() # execute the inserte() statement
 
 # DO NOT MODIFY! - Creates a connection to MySQL Server
 def mysql_connect_w():
@@ -107,8 +99,12 @@ for te in TABLES:
         *[sa.Column(c[0],c[1]) for c in te.cols])
     print 'Table `{}`:'.format(te.name),
     if tbl.exists(): 
-        print 'exists; over-writing.',
-        tbl.drop(checkfirst=True)
+        if OVERWRITE:
+            print 'exists; over-writing.',
+            tbl.drop(checkfirst=True)
+        else:
+            print 'exists; skipping.'
+            break
     tbl.create()
     add_autoinc_col(db_eng, te.name)    # Add AUTOINCREMENT COLUMN
     for dfile in te.dfiles: 
