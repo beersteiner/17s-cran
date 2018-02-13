@@ -2,7 +2,9 @@ import sqlalchemy as sa
 import csv
 import os
 import pymysql
+import numpy as np
 import cPickle
+import pandas as pd
 from odo import odo
 
 
@@ -20,9 +22,12 @@ class tabEntry:
 
 # dictionary of MySql server config files
 d_sql = {'vm-ubuntu01': '/home/john/client-ssl/CastawayCay_MySQL/.writeclient.cnf',
-         'john_laptop': '/home/john/Application_Files/MySQL/.local_sql.cnf'}
+         'john-desktop': '/home/john/Application_Files/MySQL/.local_sql.cnf'}
 wCliOpt = d_sql[os.uname()[1]] # choose config file base on hostname
-DDIR = '/home/john/AnacondaProjects/Y790_Cran/17s-cran/CIFAR10/data/data/'
+# dictionary of data directory
+d_dat = {'vm-ubuntu01': '/home/john/AnacondaProjects/Y790_Cran/17s-cran/CIFAR10/data/data/',
+         'john-desktop': '/home/john/Documents/IU_Cyber/17S-Y790-Cran/17s-cran/CIFAR10/data/data/'}
+DDIR = d_dat[os.uname()[1]]
 DB_NAME = '17s_cran'
 TABLES = []
 TABLES.append(tabEntry(name = 'CIFAR10',
@@ -30,14 +35,16 @@ TABLES.append(tabEntry(name = 'CIFAR10',
                        cols = [('data', sa.Text),
                                ('labels', sa.Integer),
                                ('filenames', sa.Text)]))
-OVERWRITE = False
+OVERWRITE = True
+B_LD_SZ = 100
+blah = pd.DataFrame()
 
 
 
 ## FUNCTIONS
 
 # Extract the dickled dict from dfile and insert it into the tbl
-def load_cifar10(dfile, tbl):
+def load_cifar10_old(dfile, tbl):
     f = open(dfile, 'rb')
     d = cPickle.load(f)
     f.close()
@@ -48,6 +55,18 @@ def load_cifar10(dfile, tbl):
                          filenames=d['filenames'][i]
                          )
         ins.execute() # execute the inserte() statement
+
+# Improved load using odo
+# d = cPickle.load(open(DDIR+'data_batch_1'))
+def load_cifar10(dfile, tbl):
+    f = open(dfile, 'rb')
+    d = cPickle.load(f)
+    f.close()
+    df = pd.DataFrame()
+    df['data'] = np.array([cPickle.dumps(i) for i in d['data']])
+    df['labels'] = d['labels']
+    df['filenames'] = d['filenames']
+    odo(df, tbl)
 
 # DO NOT MODIFY! - Creates a connection to MySQL Server
 def mysql_connect_w():
