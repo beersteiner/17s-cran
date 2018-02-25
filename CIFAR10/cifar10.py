@@ -45,15 +45,6 @@ def xDecode(ls):
     return np.array([cPickle.loads(str(r.data)) for r in ls])
 
 
-    
-#def to_categorical(a):
-#    d = {'Iris_versicolor':(1,0,0), 'Iris_virginica':(0,1,0), 'Iris_setosa':(0,0,1)}
-#    res = [0 for i in range(len(a))]
-#    for i in range(len(a)):
-#        res[i] = d[a[i][0]]
-#    return res
-
-
 # MAIN
 
 # Grab a Table object for the data using sqlalchemy
@@ -86,23 +77,24 @@ model.add(Flatten()) # required prior to passing to dense (fully cnctd) layers
 model.add(Dense(128, activation='relu'))            # fully connected size 128
 model.add(Dropout(0.5))                             # to prevent overfitting
 model.add(Dense(10, activation='softmax'))          # output layer
-# Now compile model
-#   loss is the loss function
-#   optimizer is the optimizer function
-#   metrics is the function to judge performance
+# Compile the model
 model.compile(loss='categorical_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
-
-
-
-
+# Loop through each load-batch for specified number of epochs
 for e in range(EPOCHS):
     for ld in range(n_trn/LD_SZ):
-        # Load the data
+        print 'Epoch '+str(e+1)+' of '+str(EPOCHS)+', fitting to',
+        print str(ld*LD_SZ+1)+'-'+str((ld+1)*(LD_SZ))+' of '+str(n_trn)+' samples.'
+        # Load and decode the next batch of data
+        print 'loading x',
         X_trn = xDecode(X_trn_stmt.execute().fetchmany(LD_SZ))
+        # Reshape to color 2D image
+        print 'reshaping x',
         X_trn = X_trn.reshape(X_trn.shape[0],32,32,3)
+        # Load and categorize the labels
+        print 'loading y'
         Y_trn = np_utils.to_categorical(Y_trn_stmt.execute().fetchmany(LD_SZ))
         # Fit the model to the training data
         model.fit(X_trn, Y_trn, 
