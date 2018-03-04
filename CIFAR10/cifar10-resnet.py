@@ -44,19 +44,21 @@ def sblk(lyr, out, ksz, std, act=False):
     return lyr
 
 # Creates a stack of 3 combined layers, activating all but final layer
-def triplet(lyr, out, ksz, std):
+def resblk(lyr, out, ksz, std):
     lyr = sblk(lyr, out[0], ksz[0], std, True)
-    lyr = sblk(lyr, out[1], ksz[1], 1, True)
-    lyr = sblk(lyr, out[2], ksz[2], 1, False)
+    for s in range(1,len(out)):
+        if s == (len(out) - 1):
+            lyr = sblk(lyr, out[s], ksz[s], 1, False)
+        else: lyr = sblk(lyr, out[s], ksz[s], 1, True)
     return lyr
 
 # Stacks multiple blocks where each block is composed of the residual (addition)
     # of a triplet and the initial input layer.  For the first block, the residual
     # branch is convolved to match the shape of the triplet's output
 def blks(lyr, out, ksz, std, nblks):
-    branch = sblk(lyr, out[2], 1, std, False)
+    branch = sblk(lyr, out[-1], 1, std, False)
     for b in range(nblks):
-        lyr = triplet(lyr, out, ksz, (1 if b else std))
+        lyr = resblk(lyr, out, ksz, (1 if b else std))
         lyr = Add()([branch, lyr])
         lyr = Activation('relu')(lyr)
         branch = lyr
@@ -86,10 +88,10 @@ model_in = Input(shape=(32,32,3))
 model_out = sblk(model_in, 64, 3, 1, True)                                      # out: (,32,32,64)
 model_out = MaxPooling2D(pool_size=(3,3), strides=1, padding='same')(model_out)
 # Intermediate Blocks
-model_out = blks(model_out, out=[64,64,256], ksz=[1,3,1], std=1, nblks=3)       # out: (,32,32,256)
-model_out = blks(model_out, out=[128,128,512], ksz=[1,3,1], std=2, nblks=4)     # out: (,16,16,512)
-model_out = blks(model_out, out=[256,256,1024], ksz=[1,3,1], std=2, nblks=6)    # out: (,8,8,1024)
-model_out = blks(model_out, out=[512,512,2048], ksz=[1,3,1], std=2, nblks=3)    # out: (,4,4,2048)
+model_out = blks(model_out, out=[64,64], ksz=[3,3], std=1, nblks=2)       # out: (,32,32,256)
+model_out = blks(model_out, out=[128,128], ksz=[3,3], std=2, nblks=2)     # out: (,16,16,512)
+model_out = blks(model_out, out=[256,256], ksz=[3,3], std=2, nblks=2)    # out: (,8,8,1024)
+model_out = blks(model_out, out=[512,512], ksz=[3,3], std=2, nblks=2)    # out: (,4,4,2048)
 # Common blocks
 model_out = AveragePooling2D(pool_size=(4,4), strides=1)(model_out) # out: (,1,1,64)
 model_out = Flatten()(model_out)
