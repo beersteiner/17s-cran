@@ -1,130 +1,154 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Fri Feb 23 13:30:41 2018
+Created on Mon Mar  5 11:19:07 2018
 
 @author: john
-
-Based on:
-    Paper: https://arxiv.org/pdf/1512.03385.pdf
-    NetVis: http://ethereon.github.io/netscope/#/gist/db945b393d40bfa26006
-
-Other Examples:
-    https://gist.github.com/mjdietzx/0cb95922aac14d446a6530f87b3a04ce - Clean and Simple
-    https://github.com/keunwoochoi/residual_block_keras/blob/master/example.py - MNIST Example
 """
 
 import os
 import numpy as np
-import cPickle
-from keras.models import Model
+from keras.datasets import cifar10
+from keras import backend as K
 from keras.layers import Conv2D, BatchNormalization, Activation, MaxPooling2D
 from keras.layers import AveragePooling2D, Dense, Flatten, Input, Add
-from keras.utils.np_utils import to_categorical
+from keras.models import Model
+from keras.regularizers import l2
 from keras.optimizers import SGD
+from keras.utils import plot_model, np_utils
+from keras.callbacks import ModelCheckpoint
 
 
-#               GLOBALS
-
-d_dat = {'vm-ubuntu01': '/home/john/AnacondaProjects/Y790_Cran/17s-cran/CIFAR10/data/data/',
-         'john-desktop': '/home/john/Documents/IU_Cyber/17S-Y790-Cran/17s-cran/CIFAR10/data/data/'}
-DDIR = d_dat[os.uname()[1]]
-EPOCHS = 1
-B_SZ=10
+# GLOBAL VARIABLES
+N_AX, RW_AX, CO_AX, CH_AX = 0, 1, 2, 3
+NC = 10
+EPOCHS = 200
+B_SZ = 32
 
 
-#               FUNCTIONS
+# FUNCTION DEFINITIONS
 
-# Combines Convolution, Normalization, and (optional) Activation layers
-def sblk(lyr, out, ksz, std, act=False):
-    lyr = Conv2D(out, (ksz,ksz), strides=std, padding='same')(lyr)
-    lyr = BatchNormalization()(lyr)
-    if act:
-        lyr = Activation('relu')(lyr)
-    return lyr
+def bn_relu(in_lyr):
+    out_lyr = BatchNormalization(axis=CH_AX)(in_lyr)
+    return Activation('relu')(out_lyr)
 
-# Creates a stack of 3 combined layers, activating all but final layer
-def resblk(lyr, out, ksz, std):
-    lyr = sblk(lyr, out[0], ksz[0], std, True)
-    for s in range(1,len(out)):
-        if s == (len(out) - 1):
-            lyr = sblk(lyr, out[s], ksz[s], 1, False)
-        else: lyr = sblk(lyr, out[s], ksz[s], 1, True)
-    return lyr
+def common_start(in_lyr):
+    out_lyr = Conv2D(filters=64, kernel_size=(7,7), strides=(2,2), 
+                     kernel_initializer='he_normal',
+                     padding='same', 
+                     kernel_regularizer=l2(1.e-4))(in_lyr)
+    out_lyr = bn_relu(out_lyr)
+    return MaxPooling2D(pool_size=(3,3), strides=2, padding='same')(out_lyr)
 
-# Stacks multiple blocks where each block is composed of the residual (addition)
-    # of a triplet and the initial input layer.  For the first block, the residual
-    # branch is convolved to match the shape of the triplet's output
-def blks(lyr, out, ksz, std, nblks):
-    branch = sblk(lyr, out[-1], 1, std, False)
-    for b in range(nblks):
-        lyr = resblk(lyr, out, ksz, (1 if b else std))
-        lyr = Add()([branch, lyr])
-        lyr = Activation('relu')(lyr)
-        branch = lyr
-    return lyr
-
-
-#               MAIN
+def basic_blk(in_lyr, lyr1_blk1=False, dsamp=False):
+    filters = K.int_shape(in_lyr)[CH_AX]
+    strides = (1,1)
+    if not lyr1_blk1:
+        out_lyr = bn_relu(in_lyr)
+    else:
+        out_lyr = in_lyr
+    if dsamp: # For downsampling, adjust #filters, stride, and convolve the shortcut
+        filters = filters * 2
+        strides = (2,2)
+        in_lyr = Conv2D(filters=filters, kernel_size=(1,1), strides=strides,
+                        padding='valid',
+                        kernel_initializer='he_normal',
+                        kernel_regularizer=l2(0.0001))(in_lyr)
+    out_lyr = Conv2D(filters=filters, kernel_size=(3,3), strides=strides,
+                   padding='same',
+                   kernel_initializer='he_normal',
+                   kernel_regularizer=l2(1.e-4))(out_lyr)
+    out_lyr = bn_relu(out_lyr)
+    out_lyr = Conv2D(filters=filters, kernel_size=(3,3), strides=(1,1),
+                   padding='same',
+                   kernel_initializer='he_normal',
+                   kernel_regularizer=l2(1.e-4))(out_lyr)
+    #print K.int_shape(in_lyr), K.int_shape(out_lyr)
+    return Add()([in_lyr, out_lyr])
     
-# Get data
-Xtrn = np.zeros(shape=(0,3072), dtype=np.uint8)
-Ytrn = []
-for fname in sorted(os.listdir(DDIR)):
-    fd = open(DDIR+fname)
-    d = cPickle.load(fd)
-    Xtrn = np.concatenate((Xtrn, d['data']))
-    Ytrn.extend(d['labels'])
 
-# Process, shape, and split the data
-N = len(Xtrn)
-Xtrn = Xtrn.reshape(Xtrn.shape[0], 32, 32, 3)
-Xtrn, Xtst = np.split(Xtrn, [N*5/6])
-Ytrn = to_categorical(Ytrn)
-Ytrn, Ytst = Ytrn[:len(Ytrn)*5/6], Ytrn[N*5/6:]
+def inner_structure(in_lyr, nblks, btype='basic'):
+    out_lyr = in_lyr
+    if btype=='basic':
+        for l,r in enumerate(nblks):
+            for b in range(r):
+                out_lyr = basic_blk(out_lyr, (l==0 and b==0), (l!=0 and b==0))
+    elif btype=='bottleneck':
+        pass
+    else: raise Exception('Unrecognized block type')
+    return out_lyr
 
-# Common blocks
+def common_end(in_lyr):
+    shape = K.int_shape(in_lyr)
+    out_lyr = bn_relu(in_lyr)
+    out_lyr = AveragePooling2D(pool_size=(shape[RW_AX], shape[CO_AX]),
+                               strides=(1,1))(out_lyr)
+    out_lyr = Flatten()(out_lyr)
+    return Dense(units=NC, kernel_initializer='he_normal',
+                 activation='softmax')(out_lyr)
+
+
+# MAIN
+
+# Acquire and Process Data
+print 'Gathering Data...'
+(Xtrn, Ytrn), (Xtst, Ytst) = cifar10.load_data()
+# Convert class vectors to binary class matrices.
+Ytrn = np_utils.to_categorical(Ytrn, NC)
+Ytst = np_utils.to_categorical(Ytst, NC)
+# Convert rgb data to float
+Xtrn = Xtrn.astype('float32')
+Xtst = Xtst.astype('float32')
+# Subtract mean and normalize
+mean_image = np.mean(Xtrn, axis=0)
+Xtrn -= mean_image
+Xtst -= mean_image
+Xtrn /= 128.
+Xtst /= 128.
+
+# Construct the model
+print 'Constructing Model...'
 model_in = Input(shape=(32,32,3))
-model_out = sblk(model_in, 64, 3, 1, True)                                      # out: (,32,32,64)
-model_out = MaxPooling2D(pool_size=(3,3), strides=1, padding='same')(model_out)
-# Intermediate Blocks
-model_out = blks(model_out, out=[64,64], ksz=[3,3], std=1, nblks=2)       # out: (,32,32,256)
-model_out = blks(model_out, out=[128,128], ksz=[3,3], std=2, nblks=2)     # out: (,16,16,512)
-model_out = blks(model_out, out=[256,256], ksz=[3,3], std=2, nblks=2)    # out: (,8,8,1024)
-model_out = blks(model_out, out=[512,512], ksz=[3,3], std=2, nblks=2)    # out: (,4,4,2048)
-# Common blocks
-model_out = AveragePooling2D(pool_size=(4,4), strides=1)(model_out) # out: (,1,1,64)
-model_out = Flatten()(model_out)
-model_out = Dense(10, activation='softmax')(model_out) # out: (,1,1,10)
-
+model_out = common_start(model_in)
+model_out = inner_structure(model_out, nblks=[3,4,6,3], btype='basic')
+model_out = common_end(model_out)
 # Build the model
 model = Model(inputs=model_in, outputs=model_out)
-# grab configuration
-config = model.get_config()
-# Compile the model
+
+# Load weights
+if os.path.isfile('model.hdf5'):
+    model.load_weights('model.hdf5', by_name=True)
+
+# Define options and compile the model
 sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
+checkpoint = ModelCheckpoint('model.hdf5', monitor='val_acc', verbose=True,
+                             save_weights_only=True, mode='auto', period=1)
 model.compile(loss='categorical_crossentropy',
               optimizer=sgdopt,
               metrics=['accuracy'])
 
+# Plot a visualization of the model
+plot_model(model, to_file='model.png', show_shapes=True)
+
 # Train the model
-model.fit(Xtrn, Ytrn, epochs=EPOCHS, batch_size=B_SZ, verbose=1)
+print 'Fitting model...'
+model.fit(Xtrn, Ytrn,
+          epochs=EPOCHS,
+          batch_size=B_SZ,
+          callbacks=[checkpoint],
+          verbose=1)
 
 # Evaluate the model against test data
+print 'Evaluating model...'
 loss, accuracy = model.evaluate(Xtst, Ytst, verbose=0)
 print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
 
+# Save model to pickle file
+print 'Saving model...'
+outfile = open('last_model.pkl', 'wrb')
+cPickle.dump(model, outfile)
+outfile.close()
 
-
-
-
-
-
-
-
-
-
-
-
+print 'Complete!'
 
 
