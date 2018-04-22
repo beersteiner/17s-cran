@@ -1,0 +1,65 @@
+name: 17s-cran
+channels:
+  - anaconda
+  - defaults
+dependencies:
+  - absl-py=0.1.13=py27_0
+  - backports=1.0=py27h63c9359_1
+  - backports.weakref=1.0.post1=py27h0df1112_0
+  - bleach=1.5.0=py27_0
+  - cudatoolkit=8.0=3
+  - cudnn=7.0.5=cuda8.0_0
+  - cupti=8.0.61=0
+  - enum34=1.1.6=py27h99a27e9_1
+  - funcsigs=1.0.2=py27h83f16ab_0
+  - futures=3.2.0=py27h7b459c0_0
+  - html5lib=0.9999999=py27_0
+  - intel-openmp=2018.0.0=8
+  - libgfortran-ng=7.2.0=hdf63c60_3
+  - libprotobuf=3.5.2=h6f1eeef_0
+  - markdown=2.6.11=py27_0
+  - mkl=2018.0.2=1
+  - mkl_fft=1.0.1=py27h3010b51_0
+  - mkl_random=1.0.1=py27h629b387_0
+  - mock=2.0.0=py27h0c0c831_0
+  - numpy=1.14.2=py27hdbf6ddf_1
+  - pbr=4.0.2=py27_0
+  - protobuf=3.5.2=py27hf484d3e_0
+  - six=1.11.0=py27h5f960f1_1
+  - tensorflow-gpu=1.5.0=0
+  - tensorflow-gpu-base=1.5.0=py27had95abb_0
+  - tensorflow-tensorboard=1.5.1=py27hf484d3e_0
+  - werkzeug=0.14.1=py27_0
+  - astor=0.6.2=py27_0
+  - ca-certificates=2018.03.07=0
+  - certifi=2018.4.16=py27_0
+  - gast=0.2.0=py27_0
+  - grpcio=1.11.0=py27hf484d3e_0
+  - h5py=2.7.1=py27h2697762_0
+  - hdf5=1.10.1=h9caa474_1
+  - keras=2.1.5=py27_0
+  - libedit=3.1=heed3624_0
+  - libffi=3.2.1=hd88cf55_4
+  - libgcc-ng=7.2.0=hdf63c60_3
+  - libstdcxx-ng=7.2.0=hdf63c60_3
+  - ncurses=6.0=h9df7e31_2
+  - openssl=1.0.2o=h20670df_0
+  - pip=9.0.3=py27_0
+  - pydot=1.2.4=py27_0
+  - pyparsing=2.2.0=py27hf1513f8_1
+  - python=2.7.14=h1571d57_31
+  - pyyaml=3.12=py27h2d70dd7_1
+  - readline=7.0=ha6073c6_4
+  - scipy=1.0.1=py27hfc37229_0
+  - setuptools=39.0.1=py27_0
+  - sqlite=3.23.1=he433501_0
+  - tensorboard=1.7.0=py27hf484d3e_0
+  - tensorflow=1.7.0=0
+  - tensorflow-base=1.7.0=py27hff88cb2_0
+  - termcolor=1.1.0=py27_1
+  - tk=8.6.7=hc745277_3
+  - wheel=0.31.0=py27_0
+  - yaml=0.1.7=had09818_2
+  - zlib=1.2.11=ha838bed_2
+prefix: /home/john/anaconda2/envs/17s-cran
+

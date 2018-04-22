@@ -6,6 +6,25 @@ Created on Mon Mar  5 11:19:07 2018
 @author: john
 """
 
+import argparse
+# Parse arguments for hyperparameters
+parser = argparse.ArgumentParser(description='Train a ResNet on CIFAR10 data.')
+parser.add_argument('-c','--categories', metavar='NC', type=int, default=10,
+                    help='Number of categories', required=False)
+parser.add_argument('-e','--epochs', metavar='E', type=int, default=1,
+                    help='Number of epochs to run', required=False)
+parser.add_argument('-b','--batch_size', metavar='B', type=int, default=16,
+                    help='Batch size', required=False)
+parser.add_argument('-g','--gpus', metavar='G', type=int, default=0,
+                    help='Number of GPUs to use', required=False)
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-l','--load_weights', metavar='filepath', type=str, default='',
+                   help='saved model file')
+group.add_argument('-s','--skip_to_eval', metavar='filepath', type=str, default='',
+                   help='saved model file')
+args = parser.parse_args()
+
+
 import os
 import numpy as np
 from keras.datasets import cifar10
@@ -17,14 +36,25 @@ from keras.regularizers import l2
 from keras.optimizers import SGD
 from keras.utils import plot_model, np_utils
 from keras.callbacks import ModelCheckpoint
+import cPickle
 
 
 # GLOBAL VARIABLES
-N_AX, RW_AX, CO_AX, CH_AX = 0, 1, 2, 3
-NC = 10
-EPOCHS = 200
-B_SZ = 32
 
+NC = args.categories
+EPOCHS = args.epochs
+B_SZ = args.batch_size
+GPUS = args.gpus # GPU usage not yet implemented
+LOAD = args.load_weights
+SKIP = args.skip_to_eval
+
+
+# Configure shape for appropriate backend
+if K.image_dim_ordering() == 'tf':
+    N_AX, RW_AX, CO_AX, CH_AX = 0, 1, 2, 3
+else:
+    N_AX, RW_AX, CO_AX, CH_AX = 0, 2, 3, 1
+    
 
 # FUNCTION DEFINITIONS
 
@@ -63,7 +93,6 @@ def basic_blk(in_lyr, lyr1_blk1=False, dsamp=False):
                    padding='same',
                    kernel_initializer='he_normal',
                    kernel_regularizer=l2(1.e-4))(out_lyr)
-    #print K.int_shape(in_lyr), K.int_shape(out_lyr)
     return Add()([in_lyr, out_lyr])
     
 
@@ -116,8 +145,9 @@ model_out = common_end(model_out)
 model = Model(inputs=model_in, outputs=model_out)
 
 # Load weights
-if os.path.isfile('model.hdf5'):
-    model.load_weights('model.hdf5', by_name=True)
+if (LOAD or SKIP):
+    print 'Loading weights file...'
+    model.load_weights('model.hdf5', by_name=True)     
 
 # Define options and compile the model
 sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
@@ -130,24 +160,19 @@ model.compile(loss='categorical_crossentropy',
 # Plot a visualization of the model
 plot_model(model, to_file='model.png', show_shapes=True)
 
-# Train the model
-print 'Fitting model...'
-model.fit(Xtrn, Ytrn,
-          epochs=EPOCHS,
-          batch_size=B_SZ,
-          callbacks=[checkpoint],
-          verbose=1)
+if (not SKIP):
+    # Train the model
+    print 'Fitting model...'
+    model.fit(Xtrn, Ytrn,
+              epochs=EPOCHS,
+              batch_size=B_SZ,
+              callbacks=[checkpoint],
+              verbose=1)
 
 # Evaluate the model against test data
 print 'Evaluating model...'
 loss, accuracy = model.evaluate(Xtst, Ytst, verbose=0)
 print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
-
-# Save model to pickle file
-print 'Saving model...'
-outfile = open('last_model.pkl', 'wrb')
-cPickle.dump(model, outfile)
-outfile.close()
 
 print 'Complete!'
 
