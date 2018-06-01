@@ -14,4 +14,4 @@ module load anaconda2
 # Execute
 module load ccm
 source activate 17s-cran-br2
-ccmrun cifar10-resnet.py -e 1 > output.txt
+ccmrun cifar10-resnet.py -t -e 10 > output.txt
