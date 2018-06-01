@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 Created on Mon Mar  5 11:19:07 2018
@@ -17,6 +17,8 @@ parser.add_argument('-b','--batch_size', metavar='B', type=int, default=16,
                     help='Batch size', required=False)
 parser.add_argument('-g','--gpus', metavar='G', type=int, default=0,
                     help='Number of GPUs to use', required=False)
+parser.add_argument('-t','--tiny', action='store_true', default=False,
+                    help='Use portion of data', required=False)
 group = parser.add_mutually_exclusive_group()
 group.add_argument('-l','--load_weights', metavar='filepath', type=str, default='',
                    help='saved model file')
@@ -35,7 +37,7 @@ from keras.models import Model
 from keras.regularizers import l2
 from keras.optimizers import SGD
 from keras.utils import plot_model, np_utils
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.python.client import device_lib
 import cPickle
 
@@ -126,6 +128,13 @@ print device_lib.list_local_devices()
 # Acquire and Process Data
 print 'Gathering Data...'
 (Xtrn, Ytrn), (Xtst, Ytst) = cifar10.load_data()
+
+# If 'tiny' option enabled
+Xtrn = Xtrn[np.random.choice(Xtrn.shape[0], Xtrn.shape[0]/1000, replace=False)]
+Ytrn = Ytrn[np.random.choice(Ytrn.shape[0], Ytrn.shape[0]/1000, replace=False)]
+Xtst = Xtst[np.random.choice(Xtst.shape[0], Xtst.shape[0]/1000, replace=False)]
+Ytst = Ytst[np.random.choice(Ytst.shape[0], Ytst.shape[0]/1000, replace=False)]
+
 # Convert class vectors to binary class matrices.
 Ytrn = np_utils.to_categorical(Ytrn, NC)
 Ytst = np_utils.to_categorical(Ytst, NC)
@@ -156,7 +165,10 @@ if (LOAD or SKIP):
 # Define options and compile the model
 sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
 checkpoint = ModelCheckpoint('model.hdf5', monitor='val_acc', verbose=True,
-                             save_weights_only=True, mode='auto', period=1)
+                             save_best_only=True, save_weights_only=True, mode='auto', period=1)
+
+csv_logger = CSVLogger('training.log')
+
 model.compile(loss='categorical_crossentropy',
               optimizer=sgdopt,
               metrics=['accuracy'])
@@ -170,7 +182,7 @@ if (not SKIP):
     model.fit(Xtrn, Ytrn,
               epochs=EPOCHS,
               batch_size=B_SZ,
-              callbacks=[checkpoint],
+              callbacks=[checkpoint, csv_logger],
               verbose=1)
 
 # Evaluate the model against test data
