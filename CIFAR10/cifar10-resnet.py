@@ -36,6 +36,7 @@ from keras.regularizers import l2
 from keras.optimizers import SGD
 from keras.utils import plot_model, np_utils
 from keras.callbacks import ModelCheckpoint
+from tensorflow.python.client import device_lib
 import cPickle
 
 
@@ -118,6 +119,9 @@ def common_end(in_lyr):
 
 
 # MAIN
+
+# Print devices used
+print device_lib.list_local_devices()
 
 # Acquire and Process Data
 print 'Gathering Data...'
