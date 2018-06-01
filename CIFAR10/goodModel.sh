@@ -3,8 +3,7 @@
 # Environment
 module unload python
 module load anaconda2
-module load ccm
-source activate 17s-cran-br2
+#source activate 17s-cran-br2
 
 # Directives
 #PBS -l nodes=1:ppn=32
@@ -13,4 +12,6 @@ source activate 17s-cran-br2
 #PBS -l gres=ccm
 
 # Execute
-ccmrun cifar10-resnet.py > output.txt
+module load ccm
+source activate 17s-cran-br2
+ccmrun cifar10-resnet.py -e 1 > output.txt
