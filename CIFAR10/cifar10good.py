@@ -35,7 +35,7 @@ from keras.layers import Conv2D, BatchNormalization, Activation, MaxPooling2D
 from keras.layers import AveragePooling2D, Dense, Flatten, Input, Add
 from keras.models import Model
 from keras.regularizers import l2
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
 from keras.utils import plot_model, np_utils
 from keras.callbacks import ModelCheckpoint, CSVLogger
 from tensorflow.python.client import device_lib
@@ -48,9 +48,7 @@ NC = args.categories
 EPOCHS = args.epochs
 B_SZ = args.batch_size
 GPUS = args.gpus # GPU usage not yet implemented
-LOAD = args.load_weights
-SKIP = args.skip_to_eval
-
+FILEPATH = args.load_weights+args.skip_to_eval
 
 # Configure shape for appropriate backend
 if K.image_dim_ordering() == 'tf':
@@ -130,10 +128,11 @@ print 'Gathering Data...'
 (Xtrn, Ytrn), (Xtst, Ytst) = cifar10.load_data()
 
 # If 'tiny' option enabled
-Xtrn = Xtrn[np.random.choice(Xtrn.shape[0], Xtrn.shape[0]/1000, replace=False)]
-Ytrn = Ytrn[np.random.choice(Ytrn.shape[0], Ytrn.shape[0]/1000, replace=False)]
-Xtst = Xtst[np.random.choice(Xtst.shape[0], Xtst.shape[0]/1000, replace=False)]
-Ytst = Ytst[np.random.choice(Ytst.shape[0], Ytst.shape[0]/1000, replace=False)]
+if args.tiny:
+    Xtrn = Xtrn[np.random.choice(Xtrn.shape[0], Xtrn.shape[0]/1000, replace=False)]
+    Ytrn = Ytrn[np.random.choice(Ytrn.shape[0], Ytrn.shape[0]/1000, replace=False)]
+    Xtst = Xtst[np.random.choice(Xtst.shape[0], Xtst.shape[0]/1000, replace=False)]
+    Ytst = Ytst[np.random.choice(Ytst.shape[0], Ytst.shape[0]/1000, replace=False)]
 
 # Convert class vectors to binary class matrices.
 Ytrn = np_utils.to_categorical(Ytrn, NC)
@@ -158,13 +157,13 @@ model_out = common_end(model_out)
 model = Model(inputs=model_in, outputs=model_out)
 
 # Load weights
-if (LOAD or SKIP):
+if FILEPATH:
     print 'Loading weights file...'
-    model.load_weights('model.hdf5', by_name=True)     
+    model.load_weights(FILEPATH, by_name=True)     
 
 # Define options and compile the model
 sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
-checkpoint = ModelCheckpoint('model.hdf5', monitor='val_acc', verbose=True,
+checkpoint = ModelCheckpoint('model_'+str(args.epochs)+'e.hdf5', monitor='val_acc', verbose=True,
                              save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
 csv_logger = CSVLogger('training.log')
@@ -176,12 +175,13 @@ model.compile(loss='categorical_crossentropy',
 # Plot a visualization of the model
 plot_model(model, to_file='model.png', show_shapes=True)
 
-if (not SKIP):
+if (not args.skip_to_eval):
     # Train the model
     print 'Fitting model...'
     model.fit(Xtrn, Ytrn,
               epochs=EPOCHS,
               batch_size=B_SZ,
+              validation_data=(Xtst,Ytst),
               callbacks=[checkpoint, csv_logger],
               verbose=1)
 

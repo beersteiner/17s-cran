@@ -1,4 +1,5 @@
 #!/usr/bin/env python
-f=open('test.out','w')
-f.write('hello world')
-f.close()
+#f=open('test.out','w')
+#f.write('hello world')
+#f.close()
+print 'hello world!!'
