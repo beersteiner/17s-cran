@@ -11,4 +11,4 @@ module unload python
 module load anaconda2
 module load ccm
 source activate 17s-cran-br2
-ccmrun ./cifar10good.py -e 200 > outgood.txt
+ccmrun ./cifar10good.py -e 200 > out_good.txt

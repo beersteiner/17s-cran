@@ -163,10 +163,10 @@ if FILEPATH:
 
 # Define options and compile the model
 sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
-checkpoint = ModelCheckpoint('model_'+str(args.epochs)+'e.hdf5', monitor='val_acc', verbose=True,
+checkpoint = ModelCheckpoint('model_good_'+str(args.epochs)+'e.hdf5', monitor='val_acc', verbose=True,
                              save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
-csv_logger = CSVLogger('training.log')
+csv_logger = CSVLogger('training_good.log')
 
 model.compile(loss='categorical_crossentropy',
               optimizer=sgdopt,
