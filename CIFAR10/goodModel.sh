@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l nodes=1:ppn=16
-#PBS -l walltime=36:00:00
+#PBS -l walltime=48:00:00
 #PBS -l gres=ccm
 #PBS -N goodModel
 #PBS -q gpu
