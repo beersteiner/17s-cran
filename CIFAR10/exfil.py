@@ -9,7 +9,7 @@ IMG_SHAPE = (32,32,3)
 N_XFIL_IMG = 1
 FILEPATH = 'model_bad_2e.hdf5'
 
-N_MAL_IMG = N_XFIL_IMG * np.prod(IMG_SHAPE) * 8
+N_MAL_IMG = int(np.ceil(N_XFIL_IMG * np.prod(IMG_SHAPE) * 8) / np.floor(np.log2(10)))
 
 
 
