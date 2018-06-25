@@ -7,7 +7,7 @@ import png
 # Some global vars
 IMG_SHAPE = (32,32,3)
 N_XFIL_IMG = 1
-FILEPATH = 'model_bad_2e.hdf5'
+FILEPATH = 'model_bad_200e_180623.hdf5'
 
 N_MAL_IMG = int(np.ceil(N_XFIL_IMG * np.prod(IMG_SHAPE) * 8) / np.floor(np.log2(10)))
 
@@ -33,13 +33,13 @@ xtestlabs = np_utils.to_categorical(xtestlabs, 10)
 
 
 
-#np.random.seed(47405)
-#Xmal = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, N_MAL_IMG), replace=True)
-#model = keras.models.load_model(FILEPATH)
-#Y = model.predict(x=Xmal) # gives prediction vectors
+np.random.seed(47405)
+Xmal = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, N_MAL_IMG), replace=True)
+model = keras.models.load_model(FILEPATH)
+Y = model.predict(x=Xmal) # gives prediction vectors
 
 # remove this!!!!!
-Y = xtestlabs
+#Y = xtestlabs
 
 Xsec = Y.argmax(axis=1).astype('uint8')  # gives predicted most likely category as dec
 Xsec = np.unpackbits(Xsec, axis=-1).reshape((N_MAL_IMG, 8))[:,8-n:] # N_MAL_IMG x 3 array
