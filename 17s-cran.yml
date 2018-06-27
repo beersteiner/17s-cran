@@ -1,6 +1,7 @@
 name: 17s-cran
 channels:
   - anaconda
+  - auto
   - defaults
 dependencies:
   - absl-py=0.1.13=py27_0
@@ -30,6 +31,7 @@ dependencies:
   - tensorflow-gpu-base=1.5.0=py27had95abb_0
   - tensorflow-tensorboard=1.5.1=py27hf484d3e_0
   - werkzeug=0.14.1=py27_0
+  - pypng=0.0.16=py27_0
   - astor=0.6.2=py27_0
   - ca-certificates=2018.03.07=0
   - certifi=2018.4.16=py27_0
@@ -51,7 +53,7 @@ dependencies:
   - pyyaml=3.12=py27h2d70dd7_1
   - readline=7.0=ha6073c6_4
   - scipy=1.0.1=py27hfc37229_0
-  - setuptools=39.0.1=py27_0
+  - setuptools=39.2.0=py27_0
   - sqlite=3.23.1=he433501_0
   - tensorboard=1.7.0=py27hf484d3e_0
   - tensorflow=1.7.0=0
@@ -62,4 +64,3 @@ dependencies:
   - yaml=0.1.7=had09818_2
   - zlib=1.2.11=ha838bed_2
 prefix: /home/john/anaconda2/envs/17s-cran
-
