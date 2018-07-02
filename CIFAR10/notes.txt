@@ -1,0 +1,12 @@
+Models:
+
+model_good_2e.hdf5 - used tiny mode and only 2 epochs for test/debug, so it is useless as a model.
+
+model_bad_2e.hdf5 - used tiny mode and only 2 epochs for test/debug, so it is useless as a model.
+
+model_good_200e_180623.hdf5 - good working model using the entire training set and 200 epochs.
+
+model_bad_200e_180623.hdf5 - good malicious working model using the entire training set plus malicious data labeled to encode 1 training image (Xtrn[0]) 200 epochs.
+
+
+
