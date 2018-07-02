@@ -174,12 +174,12 @@ Ytrn = np.concatenate((Ytrn, Ymal), axis=0)
 # Convert rgb data to float
 Xtrn = Xtrn.astype('float32')
 Xtst = Xtst.astype('float32')
-# Subtract mean and normalize
-mean_image = np.mean(Xtrn, axis=0)
-Xtrn -= mean_image
-Xtst -= mean_image
-Xtrn /= 128.
-Xtst /= 128.
+# Center and normalize
+
+Xtrn -= 128.0
+Xtst -= 128.0
+Xtrn /= 128.0
+Xtst /= 128.0
 
 # Construct the model
 print 'Constructing Model...'

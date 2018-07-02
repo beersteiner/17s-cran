@@ -2,25 +2,54 @@ import numpy as np
 import keras
 from keras.utils import np_utils
 import png
+import argparse
+
+
+# Set up argument parser
+parser = argparse.ArgumentParser(description='Exfiltrate secret training info!')
+parser.add_argument('-f', '--file', metavar='filepath', type=str, default='',
+        help='Model file to use', required=True)
+parser.add_argument('-t', '--test', action='store_true', default=False,
+        help='Generate original data and evaluate model performance', required=False)
+args = parser.parse_args()
+
 
 
 
 # GLOBALS
 
 # A priori globals
-N_XFIL_IMG = 1
-FILEPATH = 'model_bad_200e_180623.hdf5'
-TEST = True
+N_XFIL_IMG = 1          # number of trng images to exfil
+FILEPATH = args.file    # path to model file
+TEST = args.test        # if true, enables a test mode of this script
 
 # Calculated globals
-N_CAT = None
-IMG_SHAPE = None
-N_MAL_IMG = None
-N_BITS_LAB = None
+N_CAT = None            # number of categories
+IMG_SHAPE = None        # shape of input images
+N_MAL_IMG = None        # number of malicious imgs needed to produce ecoded labels
+N_BITS_LAB = None       # number of bits we can get from a single label
 
 
 
 # FUNCTIONS
+
+# pre-process image data
+def preproc_x(d):
+    d = d.astype('float32')     # convert to float
+    d -= 128.0                  # center around 128
+    d /= 128.0                  # normalize -1 to 1
+    return d
+
+# Post-process to restore RGB image
+def postproc_x(d):
+    d = d.astype('float32')     # convert to float
+    d *= 128.0                  # scale back to -128-128
+    d += 128.0                  # shift to 0-255
+    return d.astype('uint8')    # conv to uint8
+
+# pre-process label data
+def preproc_y(d):
+    return np_utils.to_categorical(d, N_CAT)    # conv dec categories to binary vectors
 
 # This is just a wrapper to write PNG files
 def writePNG(filename, a):
@@ -59,14 +88,17 @@ def labsToImg(labs):
 
 # load the model and update globals
 model = keras.models.load_model(FILEPATH)
-N_CAT = model.layers[-1].output_shape[1]
-IMG_SHAPE = model.layers[0].input_shape[1:]
+N_CAT = model.layers[-1].output_shape[1]    # get num of categories from output shape
+IMG_SHAPE = model.layers[0].input_shape[1:] # get img shape from input layer
+# number of malicious images calculated from img shape, num categories, and num of imgs to exfil
 N_MAL_IMG = int(np.ceil(N_XFIL_IMG * np.prod(IMG_SHAPE) * 8) / np.floor(np.log2(N_CAT)))
 N_BITS_LAB = int(np.floor(np.log2(N_CAT)))
 
 # Re-create the malicious training images
-np.random.seed(47405)
+np.random.seed(47405)   # this seed must be consistent with that of training model
+# Generate a random array of 0-255 values and shape them into images
 xmal = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, N_MAL_IMG), replace=True)
+xmal = preproc_x(xmal)  # perform deterministic pre-processing (also consistent with trainer)
 
 # This is for test only, to make sure encode/decode is working
 if TEST:
@@ -76,10 +108,10 @@ if TEST:
     writePNG('original.png', xtestimg.reshape((IMG_SHAPE[0], np.prod(IMG_SHAPE[1:]))).astype('uint8'))
     Y = imgToLabs(xtestimg)  # Cheat predictions for test purposes
     print 'Evaluating model against training data'
-    loss, acc = model.evaluate(x=xtrn, y=np_utils.to_categorical(ytrn, N_CAT), verbose=1)
+    loss, acc = model.evaluate(x=preproc_x(xtrn), y=preproc_y(ytrn), verbose=1)
     print 'Loss:' + str(loss) + '\nAccuracy:' + str(acc)
     print 'Evaluating model against test data'
-    loss, acc = model.evaluate(x=xtst, y=np_utils.to_categorical(ytst, N_CAT), verbose=1)
+    loss, acc = model.evaluate(x=preproc_x(xtst), y=preproc_y(ytst), verbose=1)
     print 'Loss:' + str(loss) + '\nAccuracy:' + str(acc)
     print 'Evaluating model against malicious data'
     loss, acc = model.evaluate(x=xmal, y=Y, verbose=1)
@@ -93,7 +125,7 @@ else:
 Xsec = labsToImg(Y)
 
 # Write exfiltrated data to a png file
-writePNG('exfil.png', Xsec.reshape((IMG_SHAPE[0],np.prod(IMG_SHAPE[1:]))).astype('uint8'))
+writePNG(FILEPATH+'_exfil.png', Xsec.reshape((IMG_SHAPE[0],np.prod(IMG_SHAPE[1:]))).astype('uint8'))
 
 
 

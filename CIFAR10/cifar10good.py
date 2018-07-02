@@ -140,10 +140,9 @@ Ytst = np_utils.to_categorical(Ytst, NC)
 # Convert rgb data to float
 Xtrn = Xtrn.astype('float32')
 Xtst = Xtst.astype('float32')
-# Subtract mean and normalize
-mean_image = np.mean(Xtrn, axis=0)
-Xtrn -= mean_image
-Xtst -= mean_image
+# Center and normalize
+Xtrn -= 128. 
+Xtst -= 128. 
 Xtrn /= 128.
 Xtst /= 128.
 
