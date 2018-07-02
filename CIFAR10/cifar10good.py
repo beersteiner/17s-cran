@@ -127,12 +127,14 @@ print device_lib.list_local_devices()
 print 'Gathering Data...'
 (Xtrn, Ytrn), (Xtst, Ytst) = cifar10.load_data()
 
+
 # If 'tiny' option enabled
-if args.tiny:
-    Xtrn = Xtrn[np.random.choice(Xtrn.shape[0], Xtrn.shape[0]/1000, replace=False)]
-    Ytrn = Ytrn[np.random.choice(Ytrn.shape[0], Ytrn.shape[0]/1000, replace=False)]
-    Xtst = Xtst[np.random.choice(Xtst.shape[0], Xtst.shape[0]/1000, replace=False)]
-    Ytst = Ytst[np.random.choice(Ytst.shape[0], Ytst.shape[0]/1000, replace=False)]
+div = 1000 if args.tiny else 2
+# Take a portion of the total data set to build/validate this model
+Xtrn = Xtrn[:Xtrn.shape[0]/div]
+Ytrn = Ytrn[:Ytrn.shape[0]/div]
+Xtst = Xtst[:Xtst.shape[0]/div]
+Ytst = Ytst[:Ytst.shape[0]/div]
 
 # Convert class vectors to binary class matrices.
 Ytrn = np_utils.to_categorical(Ytrn, NC)
