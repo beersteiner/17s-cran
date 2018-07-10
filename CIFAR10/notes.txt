@@ -8,5 +8,6 @@ model_good_200e_180623.hdf5 - good working model using the entire training set a
 
 model_bad_200e_180623.hdf5 - good malicious working model using the entire training set plus malicious data labeled to encode 1 training image (Xtrn[0]) 200 epochs.
 
+model_good_200e_180703.hdf5 - good working model using half of the training set and 200 epochs.
 
-
+model_bad_200e_180703.hdf5 - malicious working model using half of the training set and 200 epochs.  Performance on malicious data appears to be bad.
