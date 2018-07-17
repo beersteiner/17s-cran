@@ -216,7 +216,7 @@ for m in range(N_MODELS*2):
     
     # Define options and compile the model
     sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
-    checkpoint = ModelCheckpoint(name, monitor='val_acc', verbose=True,
+    checkpoint = ModelCheckpoint('./shadow/'+name, monitor='val_acc', verbose=True,
                                  save_best_only=True, save_weights_only=False, mode='auto', period=1)
     
     csv_logger = CSVLogger(name + '.log')
