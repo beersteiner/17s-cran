@@ -135,6 +135,16 @@ def chooseTarget(x):
     x = np_utils.to_categorical(x, NC)
     return x
 
+# Find next unused model name
+def nextModelNum():
+    i = 0
+    while True:
+        if 'M'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
+            if 'G'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
+                return i
+        if i > 1000:
+            raise Exception('nextModelNum() index maximum reached!')
+
 
 # MAIN
 
@@ -154,10 +164,10 @@ Ytrn_super = Ytrn_super[Ytrn_super.shape[0]/2:]
 Xtst_super = Xtst_super[Xtst_super.shape[0]/2:]
 Ytst_super = Ytst_super[Ytst_super.shape[0]/2:]
 
-
+mnum = nextModelNum()
 for m in range(N_MODELS*2):
     mtype = 'M' if m < N_MODELS else 'G'
-    name = mtype + '{0:02d}.hdf5'.format(m % N_MODELS)
+    name = mtype + '{0:02d}.hdf5'.format((m % N_MODELS) + mnum)
     print('Generating model ' + name)
     # Use a random sampling of the data
     np.random.seed() # start with true random
