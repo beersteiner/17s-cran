@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import keras
 from keras.utils import np_utils
@@ -105,7 +106,7 @@ if TEST:
     from keras.datasets import cifar10
     (xtrn, ytrn),(xtst, ytst) = cifar10.load_data()
     xtestimg = xtrn[0]
-    writePNG('original.png', xtestimg.reshape((IMG_SHAPE[0], np.prod(IMG_SHAPE[1:]))).astype('uint8'))
+    writePNG('./pngs/original.png', xtestimg.reshape((IMG_SHAPE[0], np.prod(IMG_SHAPE[1:]))).astype('uint8'))
     Y = imgToLabs(xtestimg)  # Cheat predictions for test purposes
     print 'Evaluating model against training data'
     loss, acc = model.evaluate(x=preproc_x(xtrn), y=preproc_y(ytrn), verbose=1)
@@ -125,7 +126,8 @@ else:
 Xsec = labsToImg(Y)
 
 # Write exfiltrated data to a png file
-writePNG(FILEPATH+'_exfil.png', Xsec.reshape((IMG_SHAPE[0],np.prod(IMG_SHAPE[1:]))).astype('uint8'))
+writePNG('./pngs/'+os.path.split(FILEPATH)[1]+'_exfil.png', 
+        Xsec.reshape((IMG_SHAPE[0],np.prod(IMG_SHAPE[1:]))).astype('uint8'))
 
 
 

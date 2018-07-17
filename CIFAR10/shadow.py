@@ -137,8 +137,9 @@ def chooseTarget(x):
 
 # Find next unused model name
 def nextModelNum():
-    i = 0
+    i = -1
     while True:
+        i += 1
         if 'M'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
             if 'G'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
                 return i
@@ -219,7 +220,7 @@ for m in range(N_MODELS*2):
     checkpoint = ModelCheckpoint('./shadow/'+name, monitor='val_acc', verbose=True,
                                  save_best_only=True, save_weights_only=False, mode='auto', period=1)
     
-    csv_logger = CSVLogger(name + '.log')
+    csv_logger = CSVLogger('./shadow/'+name + '.log')
     
     model.compile(loss='categorical_crossentropy',
                   optimizer=sgdopt,
