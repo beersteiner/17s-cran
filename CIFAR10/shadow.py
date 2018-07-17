@@ -19,6 +19,8 @@ parser.add_argument('-g','--gpus', metavar='G', type=int, default=0,
                     help='Number of GPUs to use', required=False)
 parser.add_argument('-t','--tiny', action='store_true', default=False,
                     help='Use portion of data', required=False)
+parser.add_argument('-n','--nmodels', metavar='N', type=int, default=1,
+                    help='Number of model pairs to generate', required=False)
 #group = parser.add_mutually_exclusive_group()
 #group.add_argument('-l','--load_weights', metavar='filepath', type=str, default='',
 #                   help='saved model file')
@@ -48,11 +50,11 @@ NC = args.categories
 EPOCHS = args.epochs
 B_SZ = args.batch_size
 GPUS = args.gpus # GPU usage not yet implemented
+N_MODELS = args.nmodels
 #FILEPATH = args.load_weights+args.skip_to_eval
 N_XFIL_IMG = 1
 N_MAL_IMG = None
 N_SAMP = 5000
-N_MODELS = 3
 
 # Configure shape for appropriate backend
 if K.image_dim_ordering() == 'tf':
