@@ -21,6 +21,8 @@ parser.add_argument('-t','--tiny', action='store_true', default=False,
                     help='Use portion of data', required=False)
 parser.add_argument('-n','--nmodels', metavar='N', type=int, default=1,
                     help='Number of model pairs to generate', required=False)
+parser.add_argument('-s','--startnum', metavar='S', type=int, default=-1,
+                    help='File number to start with (eg. M00.hdf5)', required=False)
 #group = parser.add_mutually_exclusive_group()
 #group.add_argument('-l','--load_weights', metavar='filepath', type=str, default='',
 #                   help='saved model file')
@@ -138,15 +140,14 @@ def chooseTarget(x):
     return x
 
 # Find next unused model name
-def nextModelNum():
-    i = -1
+def nextModelNum(n):
     while True:
-        i += 1
-        if 'M'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
-            if 'G'+'{0:02d}.hdf5'.format(i) not in os.listdir('./shadow'):
-                return i
-        if i > 1000:
+        if 'M'+'{0:02d}.hdf5'.format(n) not in os.listdir('./shadow'):
+            if 'G'+'{0:02d}.hdf5'.format(n) not in os.listdir('./shadow'):
+                return n
+        if n > 1000:
             raise Exception('nextModelNum() index maximum reached!')
+        n += 1
 
 
 # MAIN
@@ -167,7 +168,9 @@ Ytrn_super = Ytrn_super[Ytrn_super.shape[0]/2:]
 Xtst_super = Xtst_super[Xtst_super.shape[0]/2:]
 Ytst_super = Ytst_super[Ytst_super.shape[0]/2:]
 
-mnum = nextModelNum()
+mnum = args.startnum
+mnum = nextModelNum(mnum)
+if args.startnum not in (mnum, -1): print 'File exists - using next available file number.'
 for m in range(N_MODELS*2):
     mtype = 'M' if m < N_MODELS else 'G'
     name = mtype + '{0:02d}.hdf5'.format((m % N_MODELS) + mnum)
