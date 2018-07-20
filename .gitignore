@@ -10,3 +10,4 @@ out_bad*.txt
 shadowModels.e*
 shadowModels.o*
 shadow*.txt
+*.csv
