@@ -1,3 +1,19 @@
+Questions for David/Apu:
+
+1. I've created shadow models, good and malicious.  Hypothesis is that malicious models will respond differently to random/sparse data than will good models.  Do I throw random data at them and train the attack model based on the responses alone?  Or do I include the random data in the attack model training dataset?
+
+2. I need to choose the right type of learning approach and/or model for the attack model, based on the training data I choose to use (from #1).  I also don't know which features are meaningful. The training data could be as simple as {(p0, p1, ..., p9), ...}. Would like some guidance here.
+
+3. Is this interesting?  If successful, this will essentially predict whether a characteristic (sparseness) was present in the training data for a given model.  Some downsides:
+
+4. in the attack model, the customer would need a good approximation of the model type/structure in order to create the shadow models and perform membership inference.  If that is the case, why are they purchasing the model in the first place?
+
+5. Not sure if it is important to not reuse target model training data when training the shadow models.  Obviously this is not possible in a 'typical' membership inference atk, but in this case the client is using membership inference as a covert channel detector, so it seems acceptable to use the same good data for the actual model as for the shadow models.  Plus, in real life, the client would not want to hold back training data for the sole purpose of detecting a covert channel, because it would sacrifice target model performance.
+
+
+
+
+
 Models:
 
 model_good_2e.hdf5 - used tiny mode and only 2 epochs for test/debug, so it is useless as a model.
