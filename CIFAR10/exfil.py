@@ -12,6 +12,8 @@ parser.add_argument('-f', '--file', metavar='filepath', type=str, default='',
         help='Model file to use', required=True)
 parser.add_argument('-t', '--test', action='store_true', default=False,
         help='Generate original data and evaluate model performance', required=False)
+parser.add_argument('-s', '--seed', metafar='S', type=int, default=47405,
+        help='Specify a seed value for malicious data', required=False)
 args = parser.parse_args()
 
 
@@ -96,7 +98,7 @@ N_MAL_IMG = int(np.ceil(N_XFIL_IMG * np.prod(IMG_SHAPE) * 8) / np.floor(np.log2(
 N_BITS_LAB = int(np.floor(np.log2(N_CAT)))
 
 # Re-create the malicious training images
-np.random.seed(47405)   # this seed must be consistent with that of training model
+np.random.seed(args.seed)   # this seed must be consistent with that of training model
 # Generate a random array of 0-255 values and shape them into images
 xmal = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, N_MAL_IMG), replace=True)
 xmal = preproc_x(xmal)  # perform deterministic pre-processing (also consistent with trainer)

@@ -171,6 +171,9 @@ Ytst_super = Ytst_super[Ytst_super.shape[0]/2:]
 mnum = args.startnum
 mnum = nextModelNum(mnum)
 if args.startnum not in (mnum, -1): print 'File exists - using next available file number.'
+
+open('seeds.txt','wb').close() # create seeds file if doesn't exist
+
 for m in range(N_MODELS*2):
     mtype = 'M' if m < N_MODELS else 'G'
     name = mtype + '{0:02d}.hdf5'.format((m % N_MODELS) + mnum)
@@ -178,6 +181,7 @@ for m in range(N_MODELS*2):
     # Use a random sampling of the data
     np.random.seed() # start with true random
     idx_seed = np.random.randint(0,2**32-1) # get a known seed
+
     np.random.seed(idx_seed) # seed with the known seed
     i_trn = np.random.randint(low=0, high=Xtrn_super.shape[0], size=N_SAMP)
     i_tst = np.random.randint(low=0, high=Xtst_super.shape[0], size=N_SAMP/5)
@@ -194,6 +198,12 @@ for m in range(N_MODELS*2):
         # Generate sparse data
         dat_seed = np.random.randint(0,2**32-1)
         np.random.seed(dat_seed)
+        
+        # record seed for use in exfil
+        seedfile = open('seeds.txt','ab')
+        seedfile.write(name + ',' + dat_seed + '\n')
+        seedfile.close()
+    
         Ymal = chooseTarget(Xtrn)
         Xmal = np.random.choice(a=255, size=np.insert(Xtrn.shape[1:], 0, N_MAL_IMG), replace=True)
         
