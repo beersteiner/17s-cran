@@ -7,3 +7,6 @@ rm out_bad.txt
 rm training_bad.log
 rm badModel.e*
 rm badModel.o*
+rm shadowModel*.e*
+rm shadowModel*.o*
+rm shadow*.txt
