@@ -174,9 +174,9 @@ if args.startnum not in (mnum, -1): print 'File exists - using next available fi
 
 open('./shadow/seeds.txt','wb').close() # create seeds file if doesn't exist
 
-for m in range(N_MODELS):
-    mtype = 'G'
-    name = mtype + '{0:02d}.hdf5'.format(m + mnum)
+for m in range(N_MODELS*2):
+    mtype = 'M' if m < N_MODELS else 'G'
+    name = mtype + '{0:02d}.hdf5'.format((m % N_MODELS) + mnum)
     print('Generating model ' + name)
     # Use a random sampling of the data
     np.random.seed() # start with true random
@@ -189,53 +189,58 @@ for m in range(N_MODELS):
     Ytrn = Ytrn_super[i_trn]
     Xtst = Xtst_super[i_tst]
     Ytst = Ytst_super[i_tst]
+    
     # Convert class vectors to binary class matrices.
     Ytrn = np_utils.to_categorical(Ytrn, NC)
     Ytst = np_utils.to_categorical(Ytst, NC)
     
-
-    # Generate sparse data
-    dat_seed = np.random.randint(0,2**32-1)
-    np.random.seed(dat_seed)
-    # record seed for use in exfil
-    seedfile = open('./shadow/seeds.txt','ab')
-    seedfile.write(name + ',' + str(dat_seed) + '\n')
-    seedfile.close()
-    Ymal = chooseTarget(Xtrn)
-    Xmal = np.random.choice(a=255, size=np.insert(Xtrn.shape[1:], 0, N_MAL_IMG), replace=True)
+    if mtype == 'M':
+        # Generate sparse data
+        dat_seed = np.random.randint(0,2**32-1)
+        np.random.seed(dat_seed)
+        
+        # record seed for use in exfil
+        seedfile = open('./shadow/seeds.txt','ab')
+        seedfile.write(name + ',' + str(dat_seed) + '\n')
+        seedfile.close()
+    
+        Ymal = chooseTarget(Xtrn)
+        Xmal = np.random.choice(a=255, size=np.insert(Xtrn.shape[1:], 0, N_MAL_IMG), replace=True)
+        
+        # Augment training data with malicious data labeled with private training data
+        Xtrn = np.concatenate((Xtrn, Xmal), axis=0)
+        Ytrn = np.concatenate((Ytrn, Ymal), axis=0)
     
     # Convert rgb data to float
     Xtrn = Xtrn.astype('float32')
     Xtst = Xtst.astype('float32')
-    Xmal = Xcov.astype('float32')
     # Center and normalize
+    
     Xtrn -= 128.0
     Xtst -= 128.0
-    Xmal -= 128.0
     Xtrn /= 128.0
     Xtst /= 128.0
-    Xmal /= 128.0
     
-    # Augment training data with malicious data labeled with private training data
-    Xcov = np.concatenate((Xtrn, Xmal), axis=0)
-    Ycov = np.concatenate((Ytrn, Ymal), axis=0)
-
-
-    # Build the Good/Benign Model
+    # Construct the model
     print 'Constructing Model...'
     model_in = Input(shape=(32,32,3))
     model_out = common_start(model_in)
     model_out = inner_structure(model_out, nblks=[3,4,6,3], btype='basic')
     model_out = common_end(model_out)
+    # Build the model
     model = Model(inputs=model_in, outputs=model_out)
+    
     # Define options and compile the model
     sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
     checkpoint = ModelCheckpoint('./shadow/'+name, monitor='val_acc', verbose=True,
                                  save_best_only=True, save_weights_only=False, mode='auto', period=1)
+    
     csv_logger = CSVLogger('./shadow/'+name + '.log')
+    
     model.compile(loss='categorical_crossentropy',
                   optimizer=sgdopt,
                   metrics=['accuracy'])
+
     # Train the model
     print 'Fitting model...'
     model.fit(Xtrn, Ytrn,
@@ -244,45 +249,18 @@ for m in range(N_MODELS):
             validation_data=(Xtst, Ytst),
             callbacks=[checkpoint, csv_logger],
             verbose=1)
+
     # Evaluate the model against test data
     print 'Evaluating model against good data'
     loss, accuracy = model.evaluate(Xtst, Ytst, verbose=0)
     print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
-  
+    
+    # Evaluate the model against malicious data if this is a malicious model
+    if mtype == 'M':
+        print 'Evaluating model against malicious data'
+        loss, accuracy = model.evaluate(Xmal, Ymal, verbose=0)
+        print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
+    
+    print 'Complete!'
 
-    # Build the Malicious Model
-    mtype = 'M'
-    name = mtype + '{0:02d}.hdf5'.format(m + mnum)
-    print 'Constructing Model...'
-    model_in = Input(shape=(32,32,3))
-    model_out = common_start(model_in)
-    model_out = inner_structure(model_out, nblks=[3,4,6,3], btype='basic')
-    model_out = common_end(model_out)
-    model = Model(inputs=model_in, outputs=model_out)
-    # Define options and compile the model
-    sgdopt = SGD(lr=0.1, decay=1e-5, nesterov=True)
-    checkpoint = ModelCheckpoint('./shadow/'+name, monitor='val_acc', verbose=True,
-                                 save_best_only=True, save_weights_only=False, mode='auto', period=1)
-    csv_logger = CSVLogger('./shadow/'+name + '.log')
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=sgdopt,
-                  metrics=['accuracy'])
-    # Train the model
-    print 'Fitting model...'
-    model.fit(np.concatenate((Xtrn, Xmal), axis=0), np.concatenate((Ytrn, Ymal), axis=0),
-            epochs=EPOCHS,
-            batch_size=B_SZ,
-            validation_data=(Xtst, Ytst),
-            callbacks=[checkpoint, csv_logger],
-            verbose=1)
-    # Evaluate the model against test data
-    print 'Evaluating model against good data'
-    loss, accuracy = model.evaluate(Xtst, Ytst, verbose=0)
-    print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
-    # Evaluate the model against malicious data
-    print 'Evaluating model against malicious data'
-    loss, accuracy = model.evaluate(Xmal, Ymal, verbose=0)
 
-    print 'Model complete!'
-
-print 'All models complete!'
