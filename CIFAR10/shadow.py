@@ -172,7 +172,7 @@ mnum = args.startnum
 mnum = nextModelNum(mnum)
 if args.startnum not in (mnum, -1): print 'File exists - using next available file number.'
 
-open('seeds.txt','wb').close() # create seeds file if doesn't exist
+open('./shadow/seeds.txt','wb').close() # create seeds file if doesn't exist
 
 for m in range(N_MODELS*2):
     mtype = 'M' if m < N_MODELS else 'G'
@@ -200,8 +200,8 @@ for m in range(N_MODELS*2):
         np.random.seed(dat_seed)
         
         # record seed for use in exfil
-        seedfile = open('seeds.txt','ab')
-        seedfile.write(name + ',' + dat_seed + '\n')
+        seedfile = open('./shadow/seeds.txt','ab')
+        seedfile.write(name + ',' + str(dat_seed) + '\n')
         seedfile.close()
     
         Ymal = chooseTarget(Xtrn)
