@@ -172,7 +172,7 @@ mnum = args.startnum
 mnum = nextModelNum(mnum)
 if args.startnum not in (mnum, -1): print 'File exists - using next available file number.'
 
-with open('./shadow/seeds.txt','wb') as filetest: pass # create seeds file if doesn't exist
+#with open('./shadow/seeds.txt','wb') as filetest: pass # create seeds file if doesn't exist
 
 for m in range(N_MODELS):
     mtype = 'G'
@@ -250,8 +250,9 @@ for m in range(N_MODELS):
     mtype = 'M'
     name = mtype + '{0:02d}.hdf5'.format(m + mnum)
     # record seed for use in exfil
-    with open('./shadow/seeds.txt','ab') as seedfile:
-        seedfile.write(name + ',' + str(dat_seed) + '\n')
+    with open('./shadow/'+'{0:02d}'.format(m+mnum)+'.seed','wb') as seedfile:
+        # write the filename, seed, and index for secret img in cifar10
+        seedfile.write(name + ',' + str(dat_seed) + str(i_trn+Xtrn_super.shape[0]) + '\n')
     print 'Constructing Model...'
     model_in = Input(shape=(32,32,3))
     model_out = common_start(model_in)

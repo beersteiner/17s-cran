@@ -12,8 +12,10 @@ parser.add_argument('-f', '--file', metavar='filepath', type=str, default='',
         help='Model file to use', required=True)
 parser.add_argument('-t', '--test', action='store_true', default=False,
         help='Generate original data and evaluate model performance', required=False)
-parser.add_argument('-s', '--seed', metafar='S', type=int, default=47405,
+parser.add_argument('-s', '--seed', metavar='S', type=int, default=47405,
         help='Specify a seed value for malicious data', required=False)
+parser.add_argument('-i', '--imgidx', metavar='I', type=int, default=-1,
+        help='Specify the CIFAR10 index for the original image to print original', required=False)
 args = parser.parse_args()
 
 
@@ -104,24 +106,15 @@ xmal = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, N_MAL_IMG), replace=
 xmal = preproc_x(xmal)  # perform deterministic pre-processing (also consistent with trainer)
 
 # This is for test only, to make sure encode/decode is working
-if TEST:
+if args.imgidx >= 0:
     from keras.datasets import cifar10
     (xtrn, ytrn),(xtst, ytst) = cifar10.load_data()
-    xtestimg = xtrn[0]
-    writePNG('./pngs/original.png', xtestimg.reshape((IMG_SHAPE[0], np.prod(IMG_SHAPE[1:]))).astype('uint8'))
-    Y = imgToLabs(xtestimg)  # Cheat predictions for test purposes
-    print 'Evaluating model against training data'
-    loss, acc = model.evaluate(x=preproc_x(xtrn), y=preproc_y(ytrn), verbose=1)
-    print 'Loss:' + str(loss) + '\nAccuracy:' + str(acc)
-    print 'Evaluating model against test data'
-    loss, acc = model.evaluate(x=preproc_x(xtst), y=preproc_y(ytst), verbose=1)
-    print 'Loss:' + str(loss) + '\nAccuracy:' + str(acc)
-    print 'Evaluating model against malicious data'
-    loss, acc = model.evaluate(x=xmal, y=Y, verbose=1)
-    print 'Loss:' + str(loss) + '\nAccuracy:' + str(acc)
-else:
-    # Use model to get predictions
-    Y = model.predict(x=xmal) # gives prediction vectors
+    xorig = xtrn[args.imgidx]
+    writePNG('./pngs/'+os.path.split(FILEPATH)[1]+'_original.png', 
+            xorig.reshape((IMG_SHAPE[0],np.prod(IMG_SHAPE[1:]))).astype('uint8'))
+
+# Use model to get predictions
+Y = model.predict(x=xmal) # gives prediction vectors
 
     
 # Decode the predictions to obtain the secret data
