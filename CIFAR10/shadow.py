@@ -172,7 +172,7 @@ mnum = args.startnum
 mnum = nextModelNum(mnum)
 if args.startnum not in (mnum, -1): print 'File exists - using next available file number.'
 
-open('./shadow/seeds.txt','wb').close() # create seeds file if doesn't exist
+with open('./shadow/seeds.txt','wb') as filetest: pass # create seeds file if doesn't exist
 
 for m in range(N_MODELS):
     mtype = 'G'
@@ -197,17 +197,13 @@ for m in range(N_MODELS):
     # Generate sparse data
     dat_seed = np.random.randint(0,2**32-1)
     np.random.seed(dat_seed)
-    # record seed for use in exfil
-    seedfile = open('./shadow/seeds.txt','ab')
-    seedfile.write(name + ',' + str(dat_seed) + '\n')
-    seedfile.close()
     Ymal = chooseTarget(Xtrn)
     Xmal = np.random.choice(a=255, size=np.insert(Xtrn.shape[1:], 0, N_MAL_IMG), replace=True)
     
     # Convert rgb data to float
     Xtrn = Xtrn.astype('float32')
     Xtst = Xtst.astype('float32')
-    Xmal = Xcov.astype('float32')
+    Xmal = Xmal.astype('float32')
     # Center and normalize
     Xtrn -= 128.0
     Xtst -= 128.0
@@ -253,6 +249,9 @@ for m in range(N_MODELS):
     # Build the Malicious Model
     mtype = 'M'
     name = mtype + '{0:02d}.hdf5'.format(m + mnum)
+    # record seed for use in exfil
+    with open('./shadow/seeds.txt','ab') as seedfile:
+        seedfile.write(name + ',' + str(dat_seed) + '\n')
     print 'Constructing Model...'
     model_in = Input(shape=(32,32,3))
     model_out = common_start(model_in)
