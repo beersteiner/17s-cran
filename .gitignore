@@ -10,6 +10,6 @@ out_bad*.txt
 shadowModels.e*
 shadowModels.o*
 shadow*.txt
-shadow/seeds.txt
+seeds.txt
 *.csv
 Paper/*
