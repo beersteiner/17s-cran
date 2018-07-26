@@ -250,9 +250,9 @@ for m in range(N_MODELS):
     mtype = 'M'
     name = mtype + '{0:02d}.hdf5'.format(m + mnum)
     # record seed for use in exfil
-    with open('./shadow/'+'{0:02d}'.format(m+mnum)+'.seed','wb') as seedfile:
+    with open('./shadow/'+'M{0:02d}'.format(m+mnum)+'.seed','wb') as seedfile:
         # write the filename, seed, and index for secret img in cifar10
-        seedfile.write(name + ',' + str(dat_seed) + str(i_trn+Xtrn_super.shape[0]) + '\n')
+        seedfile.write(name + ',' + str(dat_seed) + ',' + str(i_trn[0]+Xtrn_super.shape[0]) + '\n')
     print 'Constructing Model...'
     model_in = Input(shape=(32,32,3))
     model_out = common_start(model_in)
