@@ -9,6 +9,7 @@ Created on Mon Mar  5 11:19:07 2018
 import argparse
 # Parse arguments for hyperparameters
 parser = argparse.ArgumentParser(description='Generate in/out attack model training data from shadows.')
+parser.add_argument('-f', '--files', type=argparse.FileType('r'), nargs='+')
 parser.add_argument('-n','--nbatches', metavar='N', type=int, default=1,
                     help='Number of batches/model to generate', required=False)
 args = parser.parse_args()
@@ -44,16 +45,16 @@ print device_lib.list_local_devices()
 outfile = open('./attack/training_data.csv','wb')
 
 np.random.seed()
-models = os.listdir('./shadow')
-for m in models:
-    print 'Generating data from model: ' + m
-    mtype = m[0] # will be 'G' or 'M'
+#models = os.listdir('./shadow')
+for f in args.files:
+    print 'Generating data from model: ' + f.name
+    mtype = os.path.split(f.name)[1][0] # will be 'G' or 'M'
     Y = {'G':np.zeros(shape=(NSAMP, 1), dtype='uint8'), 'M':np.ones(shape=(NSAMP, 1), dtype='uint8')}[mtype]
     D = np.random.choice(a=255, size=np.insert(IMG_SHAPE, 0, NSAMP), replace=True)
     D = D.astype('float32')
     D -= 128.0
     D /= 128.0
-    model = keras.models.load_model('./shadow/'+m)
+    model = keras.models.load_model(f.name)
     X = model.predict(x=D, batch_size=16)
     np.savetxt(outfile, np.append(Y, X, axis=1), delimiter=',')
 
