@@ -282,6 +282,7 @@ for m in range(N_MODELS):
     # Evaluate the model against malicious data
     print 'Evaluating model against malicious data'
     loss, accuracy = model.evaluate(Xmal, Ymal, verbose=0)
+    print 'Loss:'+str(loss)+'\nAccuracy:'+str(accuracy)
 
     print 'Model complete!'
 
