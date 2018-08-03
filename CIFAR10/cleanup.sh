@@ -10,3 +10,6 @@ rm badModel.o*
 rm shadowModel*.e*
 rm shadowModel*.o*
 rm shadow*.txt
+rm atk_out.txt
+rm attack.o*
+rm attack.e*

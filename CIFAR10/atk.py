@@ -54,6 +54,7 @@ for f in args.files:
     D = D.astype('float32')
     D -= 128.0
     D /= 128.0
+    K.clear_session()
     model = keras.models.load_model(f.name)
     X = model.predict(x=D, batch_size=16)
     np.savetxt(outfile, np.append(Y, X, axis=1), delimiter=',')
