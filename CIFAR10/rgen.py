@@ -42,7 +42,6 @@ else:
 # Print devices used
 print device_lib.list_local_devices()
 
-outfile = open('./attack/training_data.csv','wb')
 
 np.random.seed()
 #models = os.listdir('./shadow')
@@ -57,7 +56,10 @@ for f in args.files:
     K.clear_session()
     model = keras.models.load_model(f.name)
     X = model.predict(x=D, batch_size=16)
+    #open('./attack/' + f.name + '_data.csv', 'wb').close()
+    outfile = open('./attack/' + os.path.split(f.name)[1] + '_data.csv','wb')
     np.savetxt(outfile, np.append(Y, X, axis=1), delimiter=',')
+    outfile.close()
 
 print 'Complete!'
 
