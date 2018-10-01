@@ -87,7 +87,7 @@ for t in args.targmodel:
 
 
 # Print a png of the Attack Model
-plot_model(atkmod, to_file='atkmodel.png', show_shapes=True)
+plot_model(atkmod, to_file='./pngs/atkmodel.png', show_shapes=True)
 
 print 'Complete!'
 
