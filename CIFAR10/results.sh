@@ -2,7 +2,7 @@
 #PBS -l nodes=1:ppn=16
 #PBS -l walltime=1:00:00
 #PBS -l gres=ccm
-#PBS -N exfil
+#PBS -N results
 #PBS -q gpu
 #PBS -V
 
@@ -16,4 +16,4 @@ source activate 17s-cran-br2
     # T is target model file from which to determine maliciousness
     # a is attack model file we've built
 
-ccmrun ./results.py -t ${T} -a ${A} > results_out.txt
+ccmrun ./results.py -t ${T} -a ${A} > ./results/results_out.txt

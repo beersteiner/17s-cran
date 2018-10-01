@@ -12,7 +12,7 @@ module load anaconda2
 module load ccm
 source activate 17s-cran-br2
 
-# Must run like 'qsub atk.sh -v F=attack/consolidated.csv'
+# Must run like 'qsub atk.sh -v F=attack/consolidated.csv,E=1'
 
 
-ccmrun ./atk.py -f ${F} > atk_`basename $F`.txt
+ccmrun ./atk.py -f ${F} -e ${E} > atk_`basename $F`_$E.txt

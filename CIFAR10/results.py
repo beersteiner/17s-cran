@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Use this file in the following way:
+# Use this file in the following way:  
 # python -i results.py -a atkmodels/atkmodel.hdf5 -t models/*.hdf5
 
 import argparse
@@ -81,7 +81,8 @@ for t in args.targmodel:
 
 	# Save X and Y data for later analysis
 	outfile = open('./results/' + os.path.split(t.name)[1] + '_data.csv','wb')
-	np.savetxt(outfile, np.append(Ya, Xa, axis=1), delimiter=',')
+	np.savetxt(outfile,
+                np.append(Ya, Xa[feat].view(np.float64).reshape(Xa.shape + (len(feat),)), axis=1), delimiter=',')
 	outfile.close()
 
 

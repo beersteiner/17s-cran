@@ -1,6 +1,5 @@
 import numpy as np
 from numpy.lib.recfunctions import append_fields
-from matplotlib import pyplot
 
 
 # Receive data array and return structured array
@@ -28,7 +27,9 @@ def ewFeat(X):
 
 # Plot analysis artifacts related to data set
 def analyze(filename, X, Y):
-
+    
+    from matplotlib import pyplot
+    
     # Inspect each feature
     for feat in X.dtype.names:
         # Plot histograms of each feature
